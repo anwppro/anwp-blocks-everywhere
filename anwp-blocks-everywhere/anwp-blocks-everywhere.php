@@ -111,6 +111,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			add_action( 'manage_anwp_be_posts_custom_column', [ $this, 'columns_display' ], 10, 2 );
 			add_filter( 'manage_edit-anwp_be_columns', [ $this, 'columns' ] );
 			add_filter( 'manage_edit-anwp_be_sortable_columns', [ $this, 'sortable_columns' ] );
+			add_action( 'pre_get_posts', [ $this, 'sortable_columns_orderby' ] );
 
 			// Register dynamic hooks for rendering blocks
 			add_action( 'wp', [ $this, 'register_dynamic_hooks' ] );
@@ -169,6 +170,60 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			$columns['anwp_be_hook']     = 'anwp_be_hook';
 			$columns['anwp_be_priority'] = 'anwp_be_priority';
 			return $columns;
+		}
+
+		/**
+		 * Handle sorting for custom columns.
+		 *
+		 * @param WP_Query $query The WP_Query instance.
+		 *
+		 * @return void
+		 */
+		public function sortable_columns_orderby( $query ) {
+			if ( ! is_admin() || ! $query->is_main_query() ) {
+				return;
+			}
+
+			if ( 'anwp_be' !== $query->get( 'post_type' ) ) {
+				return;
+			}
+
+			$orderby = $query->get( 'orderby' );
+
+			if ( 'anwp_be_hook' === $orderby ) {
+				$query->set( 'meta_query', [
+					'relation' => 'OR',
+					'hook_clause' => [
+						'key'     => '_anwp_be_hook',
+						'compare' => 'EXISTS',
+					],
+					[
+						'key'     => '_anwp_be_hook',
+						'compare' => 'NOT EXISTS',
+					],
+				] );
+				$query->set( 'orderby', [
+					'hook_clause' => $query->get( 'order' ) ?: 'ASC',
+					'ID'          => 'DESC',
+				] );
+			} elseif ( 'anwp_be_priority' === $orderby ) {
+				$query->set( 'meta_query', [
+					'relation' => 'OR',
+					'priority_clause' => [
+						'key'     => '_anwp_be_priority',
+						'compare' => 'EXISTS',
+						'type'    => 'NUMERIC',
+					],
+					[
+						'key'     => '_anwp_be_priority',
+						'compare' => 'NOT EXISTS',
+					],
+				] );
+				$query->set( 'orderby', [
+					'priority_clause' => $query->get( 'order' ) ?: 'ASC',
+					'ID'              => 'DESC',
+				] );
+			}
 		}
 
 		/**
