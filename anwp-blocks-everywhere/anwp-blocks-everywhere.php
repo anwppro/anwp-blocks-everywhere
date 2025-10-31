@@ -242,6 +242,10 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			if ( ! empty( get_current_screen() ) && 'anwp_be' === get_current_screen()->id ) {
 				$asset_file = self::include_file( 'build/sidebar/index.asset' );
 
+				if ( ! $asset_file || ! is_array( $asset_file ) ) {
+					return;
+				}
+
 				wp_enqueue_script( 'anwp-be-block-scripts', self::url( 'build/sidebar/index.js' ), $asset_file['dependencies'], $asset_file['version'], false );
 			}
 		}
