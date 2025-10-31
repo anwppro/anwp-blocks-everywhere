@@ -74,6 +74,13 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		 */
 		protected static $single_instance = null;
 
+	/**
+	 * Blocks grouped by hook and priority for efficient callback registration.
+	 *
+	 * @var    array
+	 */
+	protected $blocks_by_hook_priority = [];
+
 		/**
 		 * Creates or returns an instance of this class.
 		 *
@@ -406,19 +413,40 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		 */
 		public function register_dynamic_hooks() {
 			// Only run on frontend template requests
-			if ( is_admin() || wp_doing_ajax() || wp_is_json_request() ) {
+			if ( is_admin() || wp_doing_ajax() || wp_is_json_request() || wp_doing_cron() ) {
 				return;
 			}
 
 			$blocks_data = $this->get_blocks_data();
 
+			// Group blocks by hook and priority to reduce closure creation
+			// Instead of creating one closure per block, we create one per unique hook+priority combination
 			foreach ( $blocks_data as $block_data ) {
+				$hook     = $block_data['hook'];
+				$priority = $block_data['priority'];
+
+				// Create unique key for this hook+priority combination
+				$key = $hook . '_' . $priority;
+
+				if ( ! isset( $this->blocks_by_hook_priority[ $key ] ) ) {
+					$this->blocks_by_hook_priority[ $key ] = [
+						'hook'     => $hook,
+						'priority' => $priority,
+						'blocks'   => [],
+					];
+				}
+
+				$this->blocks_by_hook_priority[ $key ]['blocks'][] = $block_data;
+			}
+
+			// Register one callback per unique hook+priority combination
+			foreach ( $this->blocks_by_hook_priority as $key => $data ) {
 				add_action(
-					$block_data['hook'],
-					function () use ( $block_data ) {
-						$this->render_blocks_content( $block_data );
+					$data['hook'],
+					function () use ( $key ) {
+						$this->render_blocks_for_hook_priority( $key );
 					},
-					$block_data['priority']
+					$data['priority']
 				);
 			}
 		}
@@ -473,6 +501,26 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			$content = apply_filters( 'anwp_be_render_content', $content, $block_data );
 
 			echo $content;
+		}
+
+		/**
+		 * Render all blocks for a specific hook+priority combination.
+		 *
+		 * This method is called by the dynamic hook callbacks and renders all blocks
+		 * that are registered for the same hook and priority level.
+		 *
+		 * @param string $key The unique key for the hook+priority combination.
+		 *
+		 * @return void
+		 */
+		public function render_blocks_for_hook_priority( $key ) {
+			if ( ! isset( $this->blocks_by_hook_priority[ $key ] ) ) {
+				return;
+			}
+
+			foreach ( $this->blocks_by_hook_priority[ $key ]['blocks'] as $block_data ) {
+				$this->render_blocks_content( $block_data );
+			}
 		}
 
 		/**
