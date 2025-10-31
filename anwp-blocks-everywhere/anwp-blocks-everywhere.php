@@ -40,7 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 
-if ( ! class_exists( 'AnWP_', false ) ) {
+if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 
 	/**
 	 * Main initiation class.
@@ -120,8 +120,8 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 
 			// Cache invalidation
 			add_action( 'save_post_anwp_be', [ $this, 'clear_blocks_cache' ] );
-			add_action( 'delete_post', [ $this, 'clear_blocks_cache' ] );
-			add_action( 'wp_trash_post', [ $this, 'clear_blocks_cache' ] );
+			add_action( 'before_delete_post', [ $this, 'clear_blocks_cache_on_delete' ] );
+			add_action( 'wp_trash_post', [ $this, 'clear_blocks_cache_on_delete' ] );
 		}
 
 		/**
@@ -189,7 +189,7 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 				'menu_icon'           => 'dashicons-menu',
 				'has_archive'         => false,
 				'hierarchical'        => false,
-				'supports'            => [ 'title', 'editor', 'custom-fields' ],
+				'supports'            => [ 'title', 'editor', 'custom-fields', 'page-attributes' ],
 			];
 
 			register_post_type( 'anwp_be', $args );
@@ -353,6 +353,19 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 		 */
 		public function clear_blocks_cache() {
 			delete_transient( 'anwp_be_blocks_data' );
+		}
+
+		/**
+		 * Clear blocks data cache only for anwp_be post type
+		 *
+		 * @param int $post_id Post ID being deleted/trashed.
+		 *
+		 * @return void
+		 */
+		public function clear_blocks_cache_on_delete( $post_id ) {
+			if ( 'anwp_be' === get_post_type( $post_id ) ) {
+				$this->clear_blocks_cache();
+			}
 		}
 
 		/**
