@@ -287,7 +287,13 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 				],
 			];
 
-			$posts       = get_posts( $args );
+			$posts = get_posts( $args );
+
+			// Prime meta cache for all posts at once
+			if ( ! empty( $posts ) ) {
+				update_meta_cache( 'post', wp_list_pluck( $posts, 'ID' ) );
+			}
+
 			$blocks_data = [];
 
 			foreach ( $posts as $post ) {
