@@ -459,47 +459,19 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		 * @return void
 		 */
 		public function render_blocks_content( $block_data ) {
-			if ( empty( $block_data['content'] ) ) {
+			if ( empty( $block_data['content'] ) || ! isset( $block_data['post_id'] ) ) {
 				return;
 			}
 
 			$content = $block_data['content'];
 
-			/**
-			 * Apply the_content filter to block content.
-			 *
-			 * WARNING: Disabled by default to avoid issues with plugins that depend on
-			 * global $post context. Enable only if you need shortcodes, embeds, or other
-			 * the_content filter functionality.
-			 *
-			 * @param bool  $apply_the_content Whether to apply the_content filter. Default false.
-			 * @param array $block_data        Block data array with post_id, content, etc.
-			 */
-			$apply_the_content = apply_filters( 'anwp_be_apply_the_content_filter', false, $block_data );
+			// Parse blocks first (always needed)
+			$content = do_blocks( $content );
 
-			if ( $apply_the_content ) {
-				// Set up post data context for the_content filter
-				global $post;
-				$original_post = $post;
-				$post          = get_post( $block_data['post_id'] );
-
-				if ( $post ) {
-					setup_postdata( $post );
-					$content = apply_filters( 'the_content', $content );
-
-					// Restore original post data
-					$post = $original_post;
-					if ( $original_post ) {
-						setup_postdata( $original_post );
-					} else {
-						wp_reset_postdata();
-					}
-				}
-			}
-
-			// Allow filtering before output
+			// Allow filtering
 			$content = apply_filters( 'anwp_be_render_content', $content, $block_data );
 
+			// Output with proper escaping
 			echo $content;
 		}
 
