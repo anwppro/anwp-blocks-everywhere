@@ -99,10 +99,6 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 
 		/**
 		 * Add hooks and filters.
-		 * Priority needs to be
-		 * < 10 for CPT_Core,
-		 * < 5 for Taxonomy_Core,
-		 * and 0 for Widgets because widgets_init runs at init priority 1.
 		 */
 		public function hooks() {
 			add_action( 'init', [ $this, 'init' ] );
@@ -114,6 +110,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 
 			add_action( 'manage_anwp_be_posts_custom_column', [ $this, 'columns_display' ], 10, 2 );
 			add_filter( 'manage_edit-anwp_be_columns', [ $this, 'columns' ] );
+			add_filter( 'manage_edit-anwp_be_sortable_columns', [ $this, 'sortable_columns' ] );
 
 			// Register dynamic hooks for rendering blocks
 			add_action( 'wp', [ $this, 'register_dynamic_hooks' ] );
@@ -159,6 +156,19 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 				$priority = get_post_meta( $post_id, '_anwp_be_priority', true );
 				echo esc_html( $priority ?: '10' );
 			}
+		}
+
+		/**
+		 * Define sortable columns.
+		 *
+		 * @param array $columns Array of registered column names.
+		 *
+		 * @return array Modified array.
+		 */
+		public function sortable_columns( $columns ) {
+			$columns['anwp_be_hook']     = 'anwp_be_hook';
+			$columns['anwp_be_priority'] = 'anwp_be_priority';
+			return $columns;
 		}
 
 		/**
@@ -238,6 +248,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 					'publish_posts'     => 'manage_options',
 				],
 				'menu_icon'           => 'dashicons-menu',
+				'menu_position'       => 20,
 				'has_archive'         => false,
 				'hierarchical'        => false,
 				'supports'            => [ 'title', 'editor', 'custom-fields', 'page-attributes' ],
