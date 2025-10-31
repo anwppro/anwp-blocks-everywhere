@@ -120,6 +120,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			add_action( 'save_post_anwp_be', [ $this, 'clear_blocks_cache' ] );
 			add_action( 'before_delete_post', [ $this, 'clear_blocks_cache_on_delete' ] );
 			add_action( 'wp_trash_post', [ $this, 'clear_blocks_cache_on_delete' ] );
+			add_action( 'untrashed_post', [ $this, 'clear_blocks_cache_on_delete' ] );
 		}
 
 		/**
@@ -419,8 +420,39 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 				return;
 			}
 
-			// Apply content filters and render blocks
-			$content = apply_filters( 'the_content', $block_data['content'] );
+			$content = $block_data['content'];
+
+			/**
+			 * Apply the_content filter to block content.
+			 *
+			 * WARNING: Disabled by default to avoid issues with plugins that depend on
+			 * global $post context. Enable only if you need shortcodes, embeds, or other
+			 * the_content filter functionality.
+			 *
+			 * @param bool  $apply_the_content Whether to apply the_content filter. Default false.
+			 * @param array $block_data        Block data array with post_id, content, etc.
+			 */
+			$apply_the_content = apply_filters( 'anwp_be_apply_the_content_filter', false, $block_data );
+
+			if ( $apply_the_content ) {
+				// Set up post data context for the_content filter
+				global $post;
+				$original_post = $post;
+				$post          = get_post( $block_data['post_id'] );
+
+				if ( $post ) {
+					setup_postdata( $post );
+					$content = apply_filters( 'the_content', $content );
+
+					// Restore original post data
+					$post = $original_post;
+					if ( $original_post ) {
+						setup_postdata( $original_post );
+					} else {
+						wp_reset_postdata();
+					}
+				}
+			}
 
 			// Allow filtering before output
 			$content = apply_filters( 'anwp_be_render_content', $content, $block_data );
