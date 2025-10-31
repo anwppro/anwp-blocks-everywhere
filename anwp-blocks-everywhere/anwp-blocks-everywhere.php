@@ -151,7 +151,8 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 				echo esc_html( get_post_meta( $post_id, '_anwp_be_hook', true ) );
 			} elseif ( 'anwp_be_priority' === $column ) {
 				$priority = get_post_meta( $post_id, '_anwp_be_priority', true );
-				echo esc_html( $priority ?: '10' );
+				$priority = ( '' === $priority || false === $priority ) ? 10 : (int) $priority;
+				echo esc_html( $priority );
 			}
 		}
 
@@ -363,7 +364,8 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 
 			foreach ( $posts as $post ) {
 				$hook_name = get_post_meta( $post->ID, '_anwp_be_hook', true );
-				$priority  = (int) get_post_meta( $post->ID, '_anwp_be_priority', true ) ?: 10;
+				$priority  = get_post_meta( $post->ID, '_anwp_be_priority', true );
+				$priority  = ( '' === $priority || false === $priority ) ? 10 : (int) $priority;
 
 				if ( ! empty( $hook_name ) ) {
 					$blocks_data[] = [
