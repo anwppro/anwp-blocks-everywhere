@@ -122,6 +122,10 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			add_action( 'save_post_anwp_be', [ $this, 'clear_blocks_cache' ] );
 			add_action( 'before_delete_post', [ $this, 'clear_blocks_cache_on_delete' ] );
 			add_action( 'wp_trash_post', [ $this, 'clear_blocks_cache_on_delete' ] );
+
+			// Publish validation
+			add_action( 'transition_post_status', [ $this, 'validate_on_publish' ], 10, 3 );
+			add_action( 'admin_notices', [ $this, 'show_validation_errors' ] );
 		}
 
 		/**
@@ -154,6 +158,49 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 			} elseif ( 'anwp_be_priority' === $column ) {
 				$priority = get_post_meta( $post_id, '_anwp_be_priority', true );
 				echo esc_html( $priority ?: '10' );
+			}
+		}
+
+		/**
+		 * Validate post on publish to ensure hook is set
+		 *
+		 * @param string  $new_status New post status.
+		 * @param string  $old_status Old post status.
+		 * @param WP_Post $post       Post object.
+		 *
+		 * @return void
+		 */
+		public function validate_on_publish( $new_status, $old_status, $post ) {
+			if ( 'anwp_be' !== $post->post_type ) {
+				return;
+			}
+
+			if ( 'publish' === $new_status && 'publish' !== $old_status ) {
+				$hook = get_post_meta( $post->ID, '_anwp_be_hook', true );
+
+				if ( empty( $hook ) ) {
+					// Prevent publishing
+					wp_update_post( [
+						'ID'          => $post->ID,
+						'post_status' => 'draft',
+					] );
+
+					// Show admin notice
+					set_transient( 'anwp_be_validation_error_' . $post->ID, __( 'Cannot publish: Please specify an action hook.', 'anwp-blocks-everywhere' ), 30 );
+				}
+			}
+		}
+
+		/**
+		 * Show validation error notices in admin
+		 *
+		 * @return void
+		 */
+		public function show_validation_errors() {
+			$post_id = get_the_ID();
+			if ( $error = get_transient( 'anwp_be_validation_error_' . $post_id ) ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $error ) . '</p></div>';
+				delete_transient( 'anwp_be_validation_error_' . $post_id );
 			}
 		}
 
