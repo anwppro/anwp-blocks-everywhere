@@ -15,7 +15,7 @@ const TopMenuItemSelector = () => {
 		<TextControl
 			label="Action Hook"
 			value={ hookValue }
-			onChange={ ( value ) => editPost( { meta: { _anwp_megamenu_id: value } } ) }
+			onChange={ ( value ) => editPost( { meta: { _anwp_be_hook: value } } ) }
 		/>
 	);
 };
