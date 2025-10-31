@@ -1,0 +1,29 @@
+{
+  "name": "anwp-blocks-everywhere",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/anwppro/anwp-blocks-everywhere#readme",
+  "bugs": {
+    "url": "https://github.com/anwppro/anwp-blocks-everywhere/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anwppro/anwp-blocks-everywhere.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "wp-scripts build --output-path=anwp-blocks-everywhere/build/sidebar"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.5",
+    "@wordpress/scripts": "^30.27.0"
+  },
+  "dependencies": {
+    "@wordpress/components": "^30.7.0",
+    "@wordpress/data": "^10.34.0",
+    "@wordpress/edit-post": "^8.34.0",
+    "@wordpress/plugins": "^7.34.0"
+  }
+}
