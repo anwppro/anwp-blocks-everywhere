@@ -135,7 +135,8 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 
 			// Add new columns
 			$new_columns = [
-				'anwp_be_hook' => esc_html__( 'Hook', 'anwp-blocks-everywhere' ),
+				'anwp_be_hook'     => esc_html__( 'Hook', 'anwp-blocks-everywhere' ),
+				'anwp_be_priority' => esc_html__( 'Priority', 'anwp-blocks-everywhere' ),
 			];
 
 			return array_merge( $columns, $new_columns );
@@ -150,6 +151,9 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		public function columns_display( $column, $post_id ) {
 			if ( 'anwp_be_hook' === $column ) {
 				echo esc_html( get_post_meta( $post_id, '_anwp_be_hook', true ) );
+			} elseif ( 'anwp_be_priority' === $column ) {
+				$priority = get_post_meta( $post_id, '_anwp_be_priority', true );
+				echo esc_html( $priority ?: '10' );
 			}
 		}
 
