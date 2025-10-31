@@ -262,7 +262,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 					'show_in_rest'      => true,
 					'sanitize_callback' => 'sanitize_text_field',
 					'auth_callback'     => function () {
-						return current_user_can( 'edit_posts' );
+						return current_user_can( 'manage_options' );
 					},
 				]
 			);
@@ -278,7 +278,7 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 					'default'           => 10,
 					'sanitize_callback' => 'absint',
 					'auth_callback'     => function () {
-						return current_user_can( 'edit_posts' );
+						return current_user_can( 'manage_options' );
 					},
 				]
 			);
