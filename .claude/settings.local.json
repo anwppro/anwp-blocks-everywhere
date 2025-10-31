@@ -8,7 +8,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(Get-Content \"D:\\_dev_\\_plugins_\\anwp-blocks-everywhere\\IMPROVEMENTS.md\")",
+      "Bash(Measure-Object -Line)"
     ],
     "deny": [],
     "ask": []
