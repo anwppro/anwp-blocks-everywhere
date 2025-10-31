@@ -9,14 +9,28 @@ const TopMenuItemSelector = () => {
 		return select( 'core/editor' ).getEditedPostAttribute( 'meta' )._anwp_be_hook;
 	} );
 
+	const priorityValue = useSelect( ( select ) => {
+		return select( 'core/editor' ).getEditedPostAttribute( 'meta' )._anwp_be_priority || 10;
+	} );
+
 	const { editPost } = useDispatch( 'core/editor' );
 
 	return (
-		<TextControl
-			label="Action Hook"
-			value={ hookValue }
-			onChange={ ( value ) => editPost( { meta: { _anwp_be_hook: value } } ) }
-		/>
+		<>
+			<TextControl
+				label="Action Hook"
+				value={ hookValue }
+				onChange={ ( value ) => editPost( { meta: { _anwp_be_hook: value } } ) }
+				help="Enter the WordPress action hook name (e.g., wp_footer, wp_head)"
+			/>
+			<TextControl
+				label="Priority"
+				type="number"
+				value={ priorityValue }
+				onChange={ ( value ) => editPost( { meta: { _anwp_be_priority: parseInt( value ) || 10 } } ) }
+				help="Lower numbers run earlier (default: 10)"
+			/>
+		</>
 	);
 };
 

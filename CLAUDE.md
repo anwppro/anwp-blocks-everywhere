@@ -26,7 +26,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Provides a text input for users to specify the action hook
    - Built using `@wordpress/plugins` and `@wordpress/edit-post` APIs
    - Source: `src/plugins/sidebar.js`
-   - **Known Bug**: Line 18 has incorrect meta key - uses `_anwp_megamenu_id` instead of `_anwp_be_hook`
 
 ### File Structure
 

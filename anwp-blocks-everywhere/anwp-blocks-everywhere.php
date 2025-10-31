@@ -114,6 +114,14 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 
 			add_action( 'manage_anwp_be_posts_custom_column', [ $this, 'columns_display' ], 10, 2 );
 			add_filter( 'manage_edit-anwp_be_columns', [ $this, 'columns' ] );
+
+			// Register dynamic hooks for rendering blocks
+			add_action( 'wp', [ $this, 'register_dynamic_hooks' ] );
+
+			// Cache invalidation
+			add_action( 'save_post_anwp_be', [ $this, 'clear_blocks_cache' ] );
+			add_action( 'delete_post', [ $this, 'clear_blocks_cache' ] );
+			add_action( 'wp_trash_post', [ $this, 'clear_blocks_cache' ] );
 		}
 
 		/**
@@ -207,6 +215,22 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 					},
 				]
 			);
+
+			register_meta(
+				'post',
+				'_anwp_be_priority',
+				[
+					'object_subtype'    => 'anwp_be',
+					'single'            => true,
+					'type'              => 'integer',
+					'show_in_rest'      => true,
+					'default'           => 10,
+					'sanitize_callback' => 'absint',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_posts' );
+					},
+				]
+			);
 		}
 
 		/**
@@ -229,6 +253,106 @@ if ( ! class_exists( 'AnWP_', false ) ) {
 
 			// Load translated strings for plugin.
 			load_plugin_textdomain( 'anwp-blocks-everywhere', false, dirname( $this->basename ) . '/languages/' );
+		}
+
+		/**
+		 * Get all blocks data from database with caching
+		 *
+		 * @return array Array of objects with post_id, hook_name, priority, content
+		 */
+		public function get_blocks_data() {
+			// Try to get cached data
+			$cached = get_transient( 'anwp_be_blocks_data' );
+			if ( false !== $cached ) {
+				return $cached;
+			}
+
+			// Query all published posts
+			$args = [
+				'post_type'      => 'anwp_be',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'menu_order',
+				'order'          => 'ASC',
+				'meta_query'     => [
+					[
+						'key'     => '_anwp_be_hook',
+						'value'   => '',
+						'compare' => '!=',
+					],
+				],
+			];
+
+			$posts       = get_posts( $args );
+			$blocks_data = [];
+
+			foreach ( $posts as $post ) {
+				$hook_name = get_post_meta( $post->ID, '_anwp_be_hook', true );
+				$priority  = (int) get_post_meta( $post->ID, '_anwp_be_priority', true ) ?: 10;
+
+				if ( ! empty( $hook_name ) ) {
+					$blocks_data[] = [
+						'post_id'  => $post->ID,
+						'hook'     => sanitize_text_field( $hook_name ),
+						'priority' => $priority,
+						'content'  => $post->post_content,
+					];
+				}
+			}
+
+			// Cache for 12 hours
+			set_transient( 'anwp_be_blocks_data', $blocks_data, 12 * HOUR_IN_SECONDS );
+
+			return $blocks_data;
+		}
+
+		/**
+		 * Register dynamic action hooks for block rendering
+		 *
+		 * @return void
+		 */
+		public function register_dynamic_hooks() {
+			$blocks_data = $this->get_blocks_data();
+
+			foreach ( $blocks_data as $block_data ) {
+				add_action(
+					$block_data['hook'],
+					function () use ( $block_data ) {
+						$this->render_blocks_content( $block_data );
+					},
+					$block_data['priority']
+				);
+			}
+		}
+
+		/**
+		 * Render blocks content for a specific post
+		 *
+		 * @param array $block_data Block data array with post_id, content, etc.
+		 *
+		 * @return void
+		 */
+		public function render_blocks_content( $block_data ) {
+			if ( empty( $block_data['content'] ) ) {
+				return;
+			}
+
+			// Apply content filters and render blocks
+			$content = apply_filters( 'the_content', $block_data['content'] );
+
+			// Allow filtering before output
+			$content = apply_filters( 'anwp_be_render_content', $content, $block_data );
+
+			echo $content;
+		}
+
+		/**
+		 * Clear blocks data cache
+		 *
+		 * @return void
+		 */
+		public function clear_blocks_cache() {
+			delete_transient( 'anwp_be_blocks_data' );
 		}
 
 		/**
