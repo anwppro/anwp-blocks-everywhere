@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-Content \"D:\\_dev_\\_plugins_\\anwp-blocks-everywhere\\anwp-blocks-everywhere\\anwp-blocks-everywhere.php\")",
+      "Bash(Select-Object -Skip 242 -First 5)",
+      "Bash(sed:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
