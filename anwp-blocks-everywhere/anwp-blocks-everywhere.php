@@ -322,6 +322,11 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		 * @return void
 		 */
 		public function register_dynamic_hooks() {
+			// Only run on frontend template requests
+			if ( is_admin() || wp_doing_ajax() || wp_is_json_request() ) {
+				return;
+			}
+
 			$blocks_data = $this->get_blocks_data();
 
 			foreach ( $blocks_data as $block_data ) {
