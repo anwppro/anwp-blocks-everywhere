@@ -207,7 +207,19 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 		 * @return void
 		 */
 		public function show_validation_errors() {
-			$post_id = get_the_ID();
+			// Get post ID from edit screen
+			$post_id = 0;
+			if ( isset( $_GET['post'] ) ) {
+				$post_id = (int) $_GET['post'];
+			} elseif ( isset( $_POST['post_ID'] ) ) {
+				$post_id = (int) $_POST['post_ID'];
+			}
+
+			// Only show for anwp_be post type
+			if ( ! $post_id || 'anwp_be' !== get_post_type( $post_id ) ) {
+				return;
+			}
+
 			if ( $error = get_transient( 'anwp_be_validation_error_' . $post_id ) ) {
 				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $error ) . '</p></div>';
 				delete_transient( 'anwp_be_validation_error_' . $post_id );
