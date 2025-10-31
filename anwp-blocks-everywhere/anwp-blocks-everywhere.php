@@ -298,7 +298,22 @@ if ( ! class_exists( 'AnWP_Blocks_Everywhere', false ) ) {
 					'type'              => 'integer',
 					'show_in_rest'      => true,
 					'default'           => 10,
-					'sanitize_callback' => 'absint',
+					'sanitize_callback' => function ( $value ) {
+						// Convert to integer
+						$value = intval( $value );
+
+						// Invalid or negative values default to 10
+						if ( $value < 0 ) {
+							return 10;
+						}
+
+						// Cap at maximum of 9999
+						if ( $value > 9999 ) {
+							return 9999;
+						}
+
+						return $value;
+					},
 					'auth_callback'     => function () {
 						return current_user_can( 'manage_options' );
 					},
